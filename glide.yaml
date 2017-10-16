@@ -3,3 +3,7 @@ import:
 - package: github.com/eawsy/aws-lambda-go-core
   subpackages:
   - service/lambda/runtime
+- package: github.com/aws/aws-sdk-go
+  version: ^1.12.10
+  subpackages:
+  - aws
