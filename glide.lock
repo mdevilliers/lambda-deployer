@@ -1,12 +1,42 @@
-hash: 4d2ed9d11e07ec81538ebcac6da41fabf333bc3dbf13076d8020c7a9dcef40de
-updated: 2017-10-16T16:36:44.52980983+01:00
+hash: 517428e0cec596e004df6400004726c20a58fb6648566a88fcd06235f0361f0a
+updated: 2017-10-16T20:21:09.376690714+01:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 7cb0cfd8c7a20efc2ec149e50eb55fc770c673d8
   subpackages:
   - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/endpoints
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - internal/shareddefaults
+  - private/protocol
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/restxml
+  - private/protocol/xml/xmlutil
+  - service/s3
+  - service/sts
 - name: github.com/eawsy/aws-lambda-go-core
   version: e26eed6aa244a3d45aa693816a9c5faf39390fcd
   subpackages:
   - service/lambda/runtime
+- name: github.com/go-ini/ini
+  version: 5b3e00af70a9484542169a976dcab8d03e601a17
+- name: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 testImports: []

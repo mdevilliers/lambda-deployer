@@ -7,3 +7,5 @@ import:
   version: ^1.12.10
   subpackages:
   - aws
+- package: github.com/pkg/errors
+  version: ^0.8.0
