@@ -63,46 +63,6 @@ type S3Event struct {
 func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	log.Println("handle event : ", string(evt))
 
-	/*{
-	      "Records": [
-	          {
-	              "eventVersion": "2.0",
-	              "eventTime": "2017-10-16T12:44:56.226Z",
-	              "requestParameters": {
-	                  "sourceIPAddress": "88.202.148.160"
-	              },
-	              "s3": {
-	                  "configurationId": "tf-s3-lambda-005caa139621032f5d027c6ea5",
-	                  "object": {
-	                      "eTag": "963b9bc5f569b424fb9e8138bb10830b",
-	                      "sequencer": "0059E4A9C806181953",
-	                      "key": "cayley_notes",
-	                      "size": 4437
-	                  },
-	                  "bucket": {
-	                      "arn": "arn:aws:s3:::deployment-uploads",
-	                      "name": "deployment-uploads",
-	                      "ownerIdentity": {
-	                          "principalId": "A3NCRLD2SUC3LM"
-	                      }
-	                  },
-	                  "s3SchemaVersion": "1.0"
-	              },
-	              "responseElements": {
-	                  "x-amz-id-2": "sV8yZMSDnraI7KuxSqc//yBlhRFcwux3FL3wS9wlyRXCH2SkG52q0DhPdGsAqhfY13N0gmhT25E=",
-	                  "x-amz-request-id": "FCB9FE297224979F"
-	              },
-	              "awsRegion": "eu-west-1",
-	              "eventName": "ObjectCreated:Put",
-	              "userIdentity": {
-	                  "principalId": "AWS:AIDAJLVR2WITNP4II2UD2"
-	              },
-	              "eventSource": "aws:s3"
-	          }
-	      ]
-	  }
-	*/
-
 	s3Event := S3Event{}
 
 	err := json.Unmarshal(evt, &s3Event)
