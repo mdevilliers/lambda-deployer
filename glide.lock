@@ -1,0 +1,8 @@
+hash: bbedfdb92189bd750003f3f9a418f62d50ef61c703d7081ebc9c8f24cb3020e9
+updated: 2017-10-16T12:36:08.124701747+01:00
+imports:
+- name: github.com/eawsy/aws-lambda-go-core
+  version: e26eed6aa244a3d45aa693816a9c5faf39390fcd
+  subpackages:
+  - service/lambda/runtime
+testImports: []

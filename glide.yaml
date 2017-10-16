@@ -1,0 +1,5 @@
+package: github.com/mdevilliers/lambda-deployer
+import:
+- package: github.com/eawsy/aws-lambda-go-core
+  subpackages:
+  - service/lambda/runtime
