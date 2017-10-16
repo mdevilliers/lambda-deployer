@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "deployment_uploads" {
 module "auto_deployer" {
   source = "../modules/lamda-deployer/"
 
-  application = "my-lambda-function-deployer"
+  application = "example-deployer"
   environment = "staging"
   deployer_filepath = "../../deployer.zip"
   s3_bucket_arn = "${aws_s3_bucket.deployment_uploads.arn}"
