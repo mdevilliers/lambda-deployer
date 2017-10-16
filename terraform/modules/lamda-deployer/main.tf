@@ -33,10 +33,12 @@ resource "aws_iam_role_policy" "deployer" {
       "Action": [
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "logs:PutLogEvents",
+        "s3:GetObject"
       ],
       "Resource": [
-        "arn:aws:logs:*:*:*"
+        "arn:aws:logs:*:*:*",
+        "${var.s3_bucket_arn}*"
       ]
     }
   ]
