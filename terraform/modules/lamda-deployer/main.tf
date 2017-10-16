@@ -63,13 +63,6 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn     = "${var.s3_bucket_arn}"
 }
 
-resource "aws_lambda_alias" "deployer" {
-  name             = "${var.application}_${var.environment}_deployer"
-  description      = "alias for the latest version of the deployer"
-  function_name    = "${aws_lambda_function.deployer.function_name}"
-  function_version = "$LATEST"
-}
-
 resource "aws_s3_bucket_notification" "deployment" {
     bucket = "${var.s3_bucket_id}"
     lambda_function {
