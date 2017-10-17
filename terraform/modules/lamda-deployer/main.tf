@@ -54,6 +54,12 @@ resource "aws_lambda_function" "deployer" {
   source_code_hash = "${base64sha256(file(var.deployer_filepath))}"
   role             = "${aws_iam_role.deployer.arn}"
   timeout          = 120
+
+  environment {
+    variables = {
+      DEPLOYER_FUNCTION_ROLE_ARN = "${var.function_role_arn}"
+    }
+  }
 }
 
 resource "aws_lambda_permission" "allow_s3" {

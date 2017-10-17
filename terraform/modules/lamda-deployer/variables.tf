@@ -17,3 +17,7 @@ variable "s3_bucket_id" {
 variable "deployer_filepath" {
   description = "File path to a zip file containing the deployer"
 }
+
+variable "function_role_arn" {
+  description = "The arn of the role the function will be deployed with"
+}
