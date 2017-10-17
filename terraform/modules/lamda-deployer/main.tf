@@ -54,22 +54,21 @@ resource "aws_lambda_function" "deployer" {
   source_code_hash = "${base64sha256(file(var.deployer_filepath))}"
   role             = "${aws_iam_role.deployer.arn}"
   timeout          = 120
-
 }
 
 resource "aws_lambda_permission" "allow_s3" {
-  statement_id   = "AllowExecutionFromS3Bucket"
-  action         = "lambda:InvokeFunction"
-  function_name  = "${aws_lambda_function.deployer.function_name}"
-  principal      = "s3.amazonaws.com"
-  source_arn     = "${var.s3_bucket_arn}"
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.deployer.function_name}"
+  principal     = "s3.amazonaws.com"
+  source_arn    = "${var.s3_bucket_arn}"
 }
 
 resource "aws_s3_bucket_notification" "deployment" {
-    bucket = "${var.s3_bucket_id}"
-    lambda_function {
-        lambda_function_arn = "${aws_lambda_function.deployer.arn}"
-        events = ["s3:ObjectCreated:*"]
-    }
-}
+  bucket = "${var.s3_bucket_id}"
 
+  lambda_function {
+    lambda_function_arn = "${aws_lambda_function.deployer.arn}"
+    events              = ["s3:ObjectCreated:*"]
+  }
+}

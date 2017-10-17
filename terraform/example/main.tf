@@ -7,7 +7,6 @@ provider "aws" {
   region  = "eu-west-1"
 }
 
-
 resource "aws_s3_bucket" "deployment_uploads" {
   bucket = "deployment-uploads"
 }
@@ -15,13 +14,13 @@ resource "aws_s3_bucket" "deployment_uploads" {
 module "auto_deployer" {
   source = "../modules/lamda-deployer/"
 
-  application = "example-deployer"
-  environment = "staging"
+  application       = "example-deployer"
+  environment       = "staging"
   deployer_filepath = "../../deployer.zip"
-  s3_bucket_arn = "${aws_s3_bucket.deployment_uploads.arn}"
-  s3_bucket_id = "${aws_s3_bucket.deployment_uploads.id}"
+  s3_bucket_arn     = "${aws_s3_bucket.deployment_uploads.arn}"
+  s3_bucket_id      = "${aws_s3_bucket.deployment_uploads.id}"
 }
 
 output "s3_bucket" {
-    value = "${aws_s3_bucket.deployment_uploads.bucket_domain_name}"
+  value = "${aws_s3_bucket.deployment_uploads.bucket_domain_name}"
 }

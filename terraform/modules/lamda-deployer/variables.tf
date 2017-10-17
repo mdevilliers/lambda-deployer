@@ -17,4 +17,3 @@ variable "s3_bucket_id" {
 variable "deployer_filepath" {
   description = "File path to a zip file containing the deployer"
 }
-
