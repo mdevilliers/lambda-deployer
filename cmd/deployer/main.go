@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/eawsy/aws-lambda-go-core/service/lambda/runtime"
 	"github.com/pkg/errors"
@@ -21,6 +23,13 @@ func main() {
 
 type Policy struct {
 	AutoDeploy bool
+}
+
+type FunctionMetadata struct {
+	Description  string
+	FunctionName string
+	Handler      string
+	Runtime      string
 }
 
 type S3Event struct {
@@ -63,6 +72,12 @@ type S3Event struct {
 func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	log.Println("handle event : ", string(evt))
 
+	role := os.Getenv("DEPLOYER_FUNCTION_ROLE_ARN")
+
+	if role == "" {
+		return "error", errors.New("DEPLOYER_FUNCTION_ROLE_ARN not set")
+	}
+
 	s3Event := S3Event{}
 
 	err := json.Unmarshal(evt, &s3Event)
@@ -76,12 +91,18 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	//	AutoDeploy: true,
 	//}
 
+	session, err := session.NewSession()
+
+	if err != nil {
+		return "error", err
+	}
+
 	// read file from s3
 	region := s3Event.Records[0].AwsRegion
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	key := s3Event.Records[0].S3.Object.Key
 
-	encoded, err := base64EncodedShaForS3File(bucket, key, region)
+	encoded, err := base64EncodedShaForS3File(session, bucket, key, region)
 
 	if err != nil {
 		return "error", err
@@ -89,13 +110,25 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 
 	log.Println("sha : ", encoded)
 
+	meta := FunctionMetadata{
+		Description:  "description",
+		FunctionName: "lambda_rules",
+		Handler:      "index.handler",
+		Runtime:      "nodejs4.3",
+	}
+
+	err = deployLambdaFunction(session, bucket, key, role, meta)
+
+	if err == nil {
+		return "error", err
+	}
+
 	return "ok", nil
 
 }
 
-func base64EncodedShaForS3File(bucket, key, region string) (string, error) {
+func base64EncodedShaForS3File(sess *session.Session, bucket, key, region string) (string, error) {
 
-	sess := session.New()
 	svc := s3.New(sess, aws.NewConfig().WithRegion(region))
 
 	req := &s3.GetObjectInput{
@@ -122,4 +155,34 @@ func base64EncodedShaForS3File(bucket, key, region string) (string, error) {
 	encoded := base64.StdEncoding.EncodeToString(shaSum[:])
 	return encoded, nil
 
+}
+
+func deployLambdaFunction(sess *session.Session, s3Bucket, s3Key, role string, metadata FunctionMetadata) error {
+
+	svc := lambda.New(sess, aws.NewConfig())
+
+	req := &lambda.CreateFunctionInput{
+		Code: &lambda.FunctionCode{
+			S3Bucket: aws.String(s3Bucket),
+			S3Key:    aws.String(s3Key),
+		},
+		Description:  aws.String(metadata.Description),
+		FunctionName: aws.String(metadata.FunctionName),
+		Handler:      aws.String(metadata.Handler),
+		MemorySize:   aws.Int64(128),
+		Publish:      aws.Bool(true),
+		Role:         aws.String(role),
+		Runtime:      aws.String(metadata.Runtime),
+		Timeout:      aws.Int64(15),
+	}
+
+	result, err := svc.CreateFunction(req)
+
+	log.Println("create function : ", result, err)
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
