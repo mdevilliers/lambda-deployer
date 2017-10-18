@@ -36,6 +36,8 @@ resource "aws_iam_role_policy" "deployer" {
         "logs:PutLogEvents",
         "s3:GetObject",
         "lambda:CreateFunction",
+        "lambda:GetFunction",
+        "lambda:UpdateFunctionCode",
         "iam:PassRole"
       ],
       "Resource": [

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -30,6 +31,8 @@ type FunctionMetadata struct {
 	FunctionName string
 	Handler      string
 	Runtime      string
+	MemorySize   int64
+	Timeout      int64
 }
 
 type S3Event struct {
@@ -87,7 +90,7 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	}
 
 	// assume auto deployment
-	//policy := Policy{
+	// policy := Policy{
 	//	AutoDeploy: true,
 	//}
 
@@ -97,30 +100,36 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", err
 	}
 
-	// read file from s3
-	region := s3Event.Records[0].AwsRegion
+	//region := s3Event.Records[0].AwsRegion
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	key := s3Event.Records[0].S3.Object.Key
-
-	encoded, err := base64EncodedShaForS3File(session, bucket, key, region)
-
-	if err != nil {
-		return "error", err
-	}
-
-	log.Println("sha : ", encoded)
 
 	meta := FunctionMetadata{
 		Description:  "description",
 		FunctionName: "lambda_rules",
 		Handler:      "index.handler",
 		Runtime:      "nodejs4.3",
+		MemorySize:   128,
+		Timeout:      15,
 	}
 
-	err = deployLambdaFunction(session, bucket, key, role, meta)
+	//get function
+	if functionExists(session, meta.FunctionName) {
 
-	if err == nil {
-		return "error", err
+		err := updateLambdaFunction(session, bucket, key, meta)
+
+		if err == nil {
+			return "error", err
+		}
+
+	} else {
+
+		err := deployLambdaFunction(session, bucket, key, role, meta)
+
+		if err == nil {
+			return "error", err
+		}
+
 	}
 
 	return "ok", nil
@@ -135,8 +144,6 @@ func base64EncodedShaForS3File(sess *session.Session, bucket, key, region string
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	}
-
-	log.Println("request : ", req)
 
 	results, err := svc.GetObject(req)
 
@@ -154,7 +161,54 @@ func base64EncodedShaForS3File(sess *session.Session, bucket, key, region string
 	shaSum := sha.Sum(nil)
 	encoded := base64.StdEncoding.EncodeToString(shaSum[:])
 	return encoded, nil
+}
 
+func functionExists(sess *session.Session, name string) bool {
+
+	svc := lambda.New(sess, aws.NewConfig())
+
+	req := &lambda.GetFunctionInput{
+		FunctionName: aws.String(name),
+	}
+
+	resp, err := svc.GetFunction(req)
+
+	log.Println("GetFunction : ", resp, err)
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeResourceNotFoundException:
+				return false
+			default:
+				return true
+			}
+		}
+	}
+	return true
+
+}
+
+func updateLambdaFunction(sess *session.Session, s3Bucket, s3Key string, metadata FunctionMetadata) error {
+
+	svc := lambda.New(sess, aws.NewConfig())
+
+	req := &lambda.UpdateFunctionCodeInput{
+		FunctionName: aws.String(metadata.FunctionName),
+		Publish:      aws.Bool(true),
+		S3Bucket:     aws.String(s3Bucket),
+		S3Key:        aws.String(s3Key),
+	}
+
+	resp, err := svc.UpdateFunctionCode(req)
+
+	log.Println("UpdateFunctionCode : ", resp, err)
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
 
 func deployLambdaFunction(sess *session.Session, s3Bucket, s3Key, role string, metadata FunctionMetadata) error {
@@ -169,16 +223,16 @@ func deployLambdaFunction(sess *session.Session, s3Bucket, s3Key, role string, m
 		Description:  aws.String(metadata.Description),
 		FunctionName: aws.String(metadata.FunctionName),
 		Handler:      aws.String(metadata.Handler),
-		MemorySize:   aws.Int64(128),
+		MemorySize:   aws.Int64(metadata.MemorySize),
 		Publish:      aws.Bool(true),
 		Role:         aws.String(role),
 		Runtime:      aws.String(metadata.Runtime),
-		Timeout:      aws.Int64(15),
+		Timeout:      aws.Int64(metadata.Timeout),
 	}
 
-	result, err := svc.CreateFunction(req)
+	resp, err := svc.CreateFunction(req)
 
-	log.Println("create function : ", result, err)
+	log.Println("CreateFunction : ", resp, err)
 
 	if err != nil {
 		return errors.WithStack(err)
