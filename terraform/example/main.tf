@@ -34,7 +34,7 @@ EOF
 module "auto_deployer" {
   source = "../modules/lamda-deployer/"
 
-  application       = "example-deployer"
+  application       = "example"
   environment       = "staging"
   deployer_filepath = "../../deployer.zip"
 
