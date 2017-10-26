@@ -1,3 +1,4 @@
+SOURCE_VERSION = $(shell git rev-parse --short=6 HEAD)
 HANDLER ?= handler
 PACKAGE ?= deployer
 
@@ -11,7 +12,7 @@ docker: clean
 		-e HANDLER=$(HANDLER)\
 		-e PACKAGE=$(PACKAGE)\
 		-e GOPATH=$(GOPATH)\
-		-e LDFLAGS='$(LDFLAGS)'\
+		-e LDFLAGS='-X github.com/mdevilliers/lambda-deployer.SourceVersion=$(SOURCE_VERSION)"'\
 		-v $(CURDIR):$(CURDIR)\
 		$(foreach GP,$(subst :, ,$(GOPATH)),-v $(GP):$(GP))\
 		-w $(CURDIR)\
