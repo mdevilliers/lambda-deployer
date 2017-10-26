@@ -1,10 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
-	"io"
 	"log"
 	"os"
 	"time"
@@ -13,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/eawsy/aws-lambda-go-core/service/lambda/runtime"
+	deployer "github.com/mdevilliers/lambda-deployer"
 	"github.com/pkg/errors"
 )
 
@@ -33,6 +30,7 @@ type FunctionMetadata struct {
 	Runtime      string
 	MemorySize   int64
 	Timeout      int64
+	Alias        string
 }
 
 type S3Event struct {
@@ -73,6 +71,8 @@ type S3Event struct {
 }
 
 func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
+
+	log.Println("deployer : ", deployer.VersionString())
 	log.Println("handle event : ", string(evt))
 
 	role := os.Getenv("DEPLOYER_FUNCTION_ROLE_ARN")
@@ -100,10 +100,13 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", err
 	}
 
+	svc := lambda.New(session, aws.NewConfig())
+
 	//region := s3Event.Records[0].AwsRegion
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	key := s3Event.Records[0].S3.Object.Key
 
+	// TODO : make this dynamic
 	meta := FunctionMetadata{
 		Description:  "description",
 		FunctionName: "lambda_rules",
@@ -111,22 +114,51 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		Runtime:      "nodejs4.3",
 		MemorySize:   128,
 		Timeout:      15,
+		Alias:        "xxx-latest",
 	}
 
-	//get function
-	if functionExists(session, meta.FunctionName) {
+	var functionConfiguration *lambda.FunctionConfiguration
 
-		err := updateLambdaFunction(session, bucket, key, meta)
+	// update, create the function
+	exists, err := functionExists(svc, meta.FunctionName)
 
-		if err == nil {
+	if err != nil {
+		return "error", err
+	}
+
+	if exists {
+
+		functionConfiguration, err = updateLambdaFunction(svc, bucket, key, meta)
+
+		if err != nil {
 			return "error", err
 		}
 
 	} else {
 
-		err := deployLambdaFunction(session, bucket, key, role, meta)
+		functionConfiguration, err = deployLambdaFunction(svc, bucket, key, role, meta)
 
-		if err == nil {
+		if err != nil {
+			return "error", err
+		}
+	}
+
+	// update, create the alias
+	exists, err = aliasExists(svc, meta.FunctionName, meta.Alias)
+
+	if exists {
+
+		err = updateAlias(svc, meta.FunctionName, meta.Alias, *functionConfiguration.Version)
+
+		if err != nil {
+			return "error", err
+		}
+
+	} else {
+
+		err = createAlias(svc, meta.FunctionName, meta.Alias, *functionConfiguration.Version)
+
+		if err != nil {
 			return "error", err
 		}
 
@@ -136,36 +168,7 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 
 }
 
-func base64EncodedShaForS3File(sess *session.Session, bucket, key, region string) (string, error) {
-
-	svc := s3.New(sess, aws.NewConfig().WithRegion(region))
-
-	req := &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	}
-
-	results, err := svc.GetObject(req)
-
-	if err != nil {
-		return "", errors.Wrap(err, "error loading file from s3 API")
-	}
-	defer results.Body.Close()
-
-	sha := sha256.New()
-
-	if _, err := io.Copy(sha, results.Body); err != nil {
-		return "", errors.Wrap(err, "error reading file from s3")
-	}
-
-	shaSum := sha.Sum(nil)
-	encoded := base64.StdEncoding.EncodeToString(shaSum[:])
-	return encoded, nil
-}
-
-func functionExists(sess *session.Session, name string) bool {
-
-	svc := lambda.New(sess, aws.NewConfig())
+func functionExists(svc *lambda.Lambda, name string) (bool, error) {
 
 	req := &lambda.GetFunctionInput{
 		FunctionName: aws.String(name),
@@ -179,19 +182,79 @@ func functionExists(sess *session.Session, name string) bool {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case lambda.ErrCodeResourceNotFoundException:
-				return false
-			default:
-				return true
+				return false, nil
 			}
 		}
+		return false, err
 	}
-	return true
+	return true, nil
+}
+
+func updateAlias(svc *lambda.Lambda, functionName, aliasName, functionVersion string) error {
+
+	req := &lambda.UpdateAliasInput{
+		FunctionName:    aws.String(functionName),
+		Name:            aws.String(aliasName),
+		FunctionVersion: aws.String(functionVersion),
+	}
+
+	resp, err := svc.UpdateAlias(req)
+
+	log.Println("UpdateAlias : ", resp, err)
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 
 }
 
-func updateLambdaFunction(sess *session.Session, s3Bucket, s3Key string, metadata FunctionMetadata) error {
+func createAlias(svc *lambda.Lambda, functionName, aliasName, functionVersion string) error {
 
-	svc := lambda.New(sess, aws.NewConfig())
+	req := &lambda.CreateAliasInput{
+		FunctionName:    aws.String(functionName),
+		Name:            aws.String(aliasName),
+		FunctionVersion: aws.String(functionVersion),
+	}
+
+	resp, err := svc.CreateAlias(req)
+
+	log.Println("CreateAlias : ", resp, err)
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+
+}
+
+func aliasExists(svc *lambda.Lambda, functionName, aliasName string) (bool, error) {
+
+	req := &lambda.GetAliasInput{
+		FunctionName: aws.String(functionName),
+		Name:         aws.String(aliasName),
+	}
+
+	resp, err := svc.GetAlias(req)
+
+	log.Println("GetAlias : ", resp, err)
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeResourceNotFoundException:
+				return false, nil
+			}
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
+func updateLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key string, metadata FunctionMetadata) (*lambda.FunctionConfiguration, error) {
 
 	req := &lambda.UpdateFunctionCodeInput{
 		FunctionName: aws.String(metadata.FunctionName),
@@ -205,15 +268,13 @@ func updateLambdaFunction(sess *session.Session, s3Bucket, s3Key string, metadat
 	log.Println("UpdateFunctionCode : ", resp, err)
 
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
-	return nil
+	return resp, nil
 }
 
-func deployLambdaFunction(sess *session.Session, s3Bucket, s3Key, role string, metadata FunctionMetadata) error {
-
-	svc := lambda.New(sess, aws.NewConfig())
+func deployLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key, role string, metadata FunctionMetadata) (*lambda.FunctionConfiguration, error) {
 
 	req := &lambda.CreateFunctionInput{
 		Code: &lambda.FunctionCode{
@@ -235,8 +296,8 @@ func deployLambdaFunction(sess *session.Session, s3Bucket, s3Key, role string, m
 	log.Println("CreateFunction : ", resp, err)
 
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
-	return nil
+	return resp, nil
 }

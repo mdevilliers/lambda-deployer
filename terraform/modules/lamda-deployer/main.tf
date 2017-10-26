@@ -31,14 +31,17 @@ resource "aws_iam_role_policy" "deployer" {
     {
       "Effect": "Allow",
       "Action": [
+        "iam:PassRole",
+        "lambda:CreateAlias",
+        "lambda:CreateFunction",
+        "lambda:GetAlias",
+        "lambda:GetFunction",
+        "lambda:UpdateAlias",
+        "lambda:UpdateFunctionCode",
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
         "logs:PutLogEvents",
-        "s3:GetObject",
-        "lambda:CreateFunction",
-        "lambda:GetFunction",
-        "lambda:UpdateFunctionCode",
-        "iam:PassRole"
+        "s3:GetObject"
       ],
       "Resource": [
         "arn:aws:logs:*:*:*",
