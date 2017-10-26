@@ -1,8 +1,8 @@
-hash: 517428e0cec596e004df6400004726c20a58fb6648566a88fcd06235f0361f0a
-updated: 2017-10-16T20:21:09.376690714+01:00
+hash: 5ba05fded11994598ac7d49e29b5428c8dce4bd9377173e06adfeb22e7cb25d9
+updated: 2017-10-26T16:50:30.399831081+01:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 7cb0cfd8c7a20efc2ec149e50eb55fc770c673d8
+  version: f426770fd5a4bae6186b280d4af7dca83a4cdef4
   subpackages:
   - aws
   - aws/awserr
@@ -22,11 +22,15 @@ imports:
   - aws/signer/v4
   - internal/shareddefaults
   - private/protocol
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
+  - private/protocol/restjson
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
+  - service/lambda
   - service/s3
   - service/sts
 - name: github.com/eawsy/aws-lambda-go-core
@@ -34,9 +38,17 @@ imports:
   subpackages:
   - service/lambda/runtime
 - name: github.com/go-ini/ini
-  version: 5b3e00af70a9484542169a976dcab8d03e601a17
+  version: f384f410798cbe7cdce40eec40b79ed32bb4f1ad
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/kelseyhightower/envconfig
+  version: f611eb38b3875cc3bd991ca91c51d06446afa14c
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/spf13/cobra
+  version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
+- name: github.com/spf13/pflag
+  version: 97afa5e7ca8a08a383cb259e06636b5e2cc7897f
 testImports: []
