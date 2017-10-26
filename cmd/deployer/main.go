@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/eawsy/aws-lambda-go-core/service/lambda/runtime"
 	deployer "github.com/mdevilliers/lambda-deployer"
 	"github.com/pkg/errors"
@@ -89,11 +91,6 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", errors.Wrap(err, "error unmarshalling event json")
 	}
 
-	// assume auto deployment
-	// policy := Policy{
-	//	AutoDeploy: true,
-	//}
-
 	session, err := session.NewSession()
 
 	if err != nil {
@@ -102,19 +99,14 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 
 	svc := lambda.New(session, aws.NewConfig())
 
-	//region := s3Event.Records[0].AwsRegion
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	key := s3Event.Records[0].S3.Object.Key
 
-	// TODO : read form buckt object tags
-	meta := FunctionMetadata{
-		Description:  "some function description",
-		FunctionName: "lambda_rules",
-		Handler:      "index.handler",
-		Runtime:      "nodejs4.3",
-		MemorySize:   128,
-		Timeout:      15,
-		Alias:        "xxx-latest",
+	s3Svc := s3.New(session, aws.NewConfig())
+	meta, err := getMetadata(s3Svc, bucket, key)
+
+	if err != nil {
+		return "error", errors.Wrap(err, "error reading metadata from s3 object")
 	}
 
 	var functionConfiguration *lambda.FunctionConfiguration
@@ -300,4 +292,45 @@ func deployLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key, role string, meta
 	}
 
 	return resp, nil
+}
+
+func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (FunctionMetadata, error) {
+
+	req := &s3.HeadObjectInput{
+		Bucket: aws.String(s3Bucket),
+		Key:    aws.String(s3Key),
+	}
+
+	resp, err := svc.HeadObject(req)
+
+	if err != nil {
+		return FunctionMetadata{}, err
+	}
+
+	log.Println("metadata : ", resp.Metadata)
+
+	memorySize, err := strconv.ParseInt(*(resp.Metadata["Function-Memory-Size"]), 10, 64)
+
+	if err != nil {
+		return FunctionMetadata{}, errors.Wrap(err, "cannot parse function-memory-size")
+	}
+
+	timeout, err := strconv.ParseInt(*(resp.Metadata["Function-Timeout"]), 10, 64)
+
+	if err != nil {
+		return FunctionMetadata{}, errors.Wrap(err, "cannot parse function-timeout")
+	}
+
+	meta := FunctionMetadata{
+		Description:  *(resp.Metadata["Function-Description"]),
+		FunctionName: *(resp.Metadata["Function-Name"]),
+		Handler:      *(resp.Metadata["Function-Handler"]),
+		Runtime:      *(resp.Metadata["Function-Runtime"]),
+		MemorySize:   int64(memorySize),
+		Timeout:      int64(timeout),
+		Alias:        *(resp.Metadata["Function-Alias"]),
+	}
+
+	return meta, nil
+
 }

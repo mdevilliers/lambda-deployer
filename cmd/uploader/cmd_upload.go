@@ -46,13 +46,13 @@ func newUploadCommand() *cobra.Command {
 				Bucket: aws.String(_config.S3BucketName),
 				Key:    aws.String(fileName),
 				Metadata: map[string]*string{
-					"function-description": aws.String(_config.Description),
-					"function-name":        aws.String(_config.FunctionName),
-					"function-handler":     aws.String(_config.Handler),
-					"function-runtime":     aws.String(_config.Runtime),
-					"function-memory-size": aws.String(fmt.Sprintf("%d", _config.MemorySize)),
-					"function-timeout":     aws.String(fmt.Sprintf("%d", _config.Timeout)),
-					"function-alias":       aws.String(_config.Alias),
+					"Function-Description": aws.String(_config.Description),
+					"Function-Name":        aws.String(_config.FunctionName),
+					"Function-Handler":     aws.String(_config.Handler),
+					"Function-Runtime":     aws.String(_config.Runtime),
+					"Function-Memory-Size": aws.String(fmt.Sprintf("%d", _config.MemorySize)),
+					"Function-Timeout":     aws.String(fmt.Sprintf("%d", _config.Timeout)),
+					"Function-Alias":       aws.String(_config.Alias),
 				},
 			}
 
