@@ -20,7 +20,7 @@ func main() {
 }
 
 type Policy struct {
-	AutoDeploy bool
+	MaximumVersions int
 }
 
 type FunctionMetadata struct {
@@ -106,9 +106,9 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	key := s3Event.Records[0].S3.Object.Key
 
-	// TODO : make this dynamic
+	// TODO : read form buckt object tags
 	meta := FunctionMetadata{
-		Description:  "description",
+		Description:  "some function description",
 		FunctionName: "lambda_rules",
 		Handler:      "index.handler",
 		Runtime:      "nodejs4.3",
