@@ -46,7 +46,7 @@ resource "aws_iam_role_policy" "deployer" {
       ],
       "Resource": [
         "arn:aws:logs:*:*:*",
-        "${var.s3_bucket_arn}*",
+        "${var.s3_bucket_arn}/*",
         "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:*",
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:*"
       ]
