@@ -2,3 +2,6 @@
 
 *.zip
 *.so
+
+terraform.tfstate
+terraform.tfstate.backup
