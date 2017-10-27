@@ -307,7 +307,7 @@ func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (FunctionMetadata, error) {
 		return FunctionMetadata{}, err
 	}
 
-	log.Println("metadata : ", resp.Metadata)
+	log.Printf("metadata : %v \n", resp.Metadata)
 
 	memorySize, err := strconv.ParseInt(*(resp.Metadata["Function-Memory-Size"]), 10, 64)
 

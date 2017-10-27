@@ -3,10 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -41,8 +39,15 @@ func newUploadCommand() *cobra.Command {
 
 			svc := s3.New(session, aws.NewConfig())
 
+			f, err := os.Open(pathToFile)
+
+			if err != nil {
+				return err
+			}
+
 			req := &s3.PutObjectInput{
-				Body:   aws.ReadSeekCloser(strings.NewReader(pathToFile)),
+				ACL:    aws.String("authenticated-read"),
+				Body:   aws.ReadSeekCloser(f),
 				Bucket: aws.String(_config.S3BucketName),
 				Key:    aws.String(fileName),
 				Metadata: map[string]*string{
@@ -56,9 +61,7 @@ func newUploadCommand() *cobra.Command {
 				},
 			}
 
-			result, err := svc.PutObject(req)
-
-			log.Println(result, err)
+			_, err = svc.PutObject(req)
 
 			return err
 
