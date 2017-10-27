@@ -1,9 +1,7 @@
 lambda-deployer
 ---------------
 
-- support a terraform deployment
-- minimise IAM roles in your CI environment
-- support auto deploy
-- support two phase deploy e.g. slack
-- clean up s3
+[![CircleCI](https://circleci.com/gh/mdevilliers/lambda-deployer.svg?style=svg)](https://circleci.com/gh/mdevilliers/lambda-deployer)
+
+
 

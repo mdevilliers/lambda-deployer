@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.9.1
+
+    working_directory: /go/src/github.com/mdevilliers/lambda-deployer
+    steps:
+      - checkout
+      - run: make get-build-deps
+      - run: make check-vendor-licenses
+      - run: make coverage
+      - run: make all
+      - store_artifacts:
+          path: ./tmp/build/
+  lambda-build:
+    docker:
+      - image: eawsy/aws-lambda-go-shim:latest
+        # the docker image for the shim has its own ideas the GOPATH should be
+        environment:
+          GOPATH: /go/
+    working_directory: /go/src/github.com/mdevilliers/lambda-deployer
+    steps:
+      - checkout
+      - run : make lambda-build-ci
+      - store_artifacts:
+          path: ./cmd/deployer/deployer.zip
+workflows:
+  version: 2
+  all:
+    jobs:
+      - build
+      - lambda-build:
+          requires:
+            - build
