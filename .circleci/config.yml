@@ -12,6 +12,8 @@ jobs:
       - run: make check-vendor-licenses
       - run: make coverage
       - run: make all
+      - store_artifacts:
+          path: ./tmp/build/
   lambda-build:
     docker:
       - image: eawsy/aws-lambda-go-shim:latest
@@ -21,8 +23,9 @@ jobs:
     working_directory: /go/src/github.com/mdevilliers/lambda-deployer
     steps:
       - checkout
-      - run :
-          command: make lambda-build-ci
+      - run : make lambda-build-ci
+      - store_artifacts:
+          path: ./cmd/deployer/deployer.zip
 workflows:
   version: 2
   all:
