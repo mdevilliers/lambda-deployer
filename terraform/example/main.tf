@@ -67,34 +67,51 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
 EOF
 }
 
+# create some variables for the deployed lambda function
+# defining them here means they not exposed to either a 
+# developers or CI environment
+variable "environment_variables" {
+  type = "map"
+
+  default = {
+    ONE = "foo"
+    TWO = "bar"
+  }
+}
+
+# configure the deployer
 module "auto_deployer" {
   source = "../modules/lamda-deployer/"
 
   application       = "example"
   environment       = "staging"
-  deployer_filepath = "../../deployer.zip"
+  deployer_filepath = "../../cmd/deployer/deployer.zip"
 
   function_role_arn = "${aws_iam_role.my_lambda_role.arn}"
   s3_bucket_arn     = "${aws_s3_bucket.deployment_uploads.arn}"
   s3_bucket_id      = "${aws_s3_bucket.deployment_uploads.id}"
+
+  env_vars = {
+    variables = "${var.environment_variables}"
+  }
 }
 
-// the s3 bucket for uploads
+# the s3 bucket for uploads
 output "s3_bucket" {
   value = "${aws_s3_bucket.deployment_uploads.bucket_domain_name}"
 }
 
-// the uploader user name
+# the uploader user name
 output "user_name" {
   value = "${aws_iam_user.uploader.name}"
 }
 
-// the uploader access key
+# the uploader access key
 output "iam_access_key_id" {
   value = "${aws_iam_access_key.uploader.id}"
 }
 
-//the uploader access key secret
+# the uploader access key secret
 output "iam_access_key_secret" {
   value = "${aws_iam_access_key.uploader.secret}"
 }

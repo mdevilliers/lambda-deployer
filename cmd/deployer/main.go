@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/eawsy/aws-lambda-go-core/service/lambda/runtime"
 	deployer "github.com/mdevilliers/lambda-deployer"
+	aws_helper "github.com/mdevilliers/lambda-deployer/aws"
 	"github.com/pkg/errors"
 )
 
@@ -23,16 +23,6 @@ func main() {
 
 type Policy struct {
 	MaximumVersions int
-}
-
-type FunctionMetadata struct {
-	Description  string
-	FunctionName string
-	Handler      string
-	Runtime      string
-	MemorySize   int64
-	Timeout      int64
-	Alias        string
 }
 
 type S3Event struct {
@@ -88,7 +78,7 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	err := json.Unmarshal(evt, &s3Event)
 
 	if err != nil {
-		return "error", errors.Wrap(err, "error unmarshalling event json")
+		return "error", errors.Wrap(err, "error un-marshaling event json")
 	}
 
 	session, err := session.NewSession()
@@ -109,192 +99,25 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", errors.Wrap(err, "error reading metadata from s3 object")
 	}
 
-	var functionConfiguration *lambda.FunctionConfiguration
-
-	// update, create the function
-	exists, err := functionExists(svc, meta.FunctionName)
+	// create or update the lambda function
+	conf, err := aws_helper.CreateOrUpdateFunction(svc, bucket, key, role, meta)
 
 	if err != nil {
-		return "error", err
-	}
-
-	if exists {
-
-		functionConfiguration, err = updateLambdaFunction(svc, bucket, key, meta)
-
-		if err != nil {
-			return "error", err
-		}
-
-	} else {
-
-		functionConfiguration, err = deployLambdaFunction(svc, bucket, key, role, meta)
-
-		if err != nil {
-			return "error", err
-		}
+		return "error", errors.Wrap(err, "error creating or updating lambda function")
 	}
 
 	// update, create the alias
-	exists, err = aliasExists(svc, meta.FunctionName, meta.Alias)
+	err = aws_helper.CreateOrUpdateAlias(svc, conf, meta)
 
-	if exists {
-
-		err = updateAlias(svc, meta.FunctionName, meta.Alias, *functionConfiguration.Version)
-
-		if err != nil {
-			return "error", err
-		}
-
-	} else {
-
-		err = createAlias(svc, meta.FunctionName, meta.Alias, *functionConfiguration.Version)
-
-		if err != nil {
-			return "error", err
-		}
-
+	if err != nil {
+		return "error", errors.Wrap(err, "error creating or updating alias")
 	}
 
 	return "ok", nil
 
 }
 
-func functionExists(svc *lambda.Lambda, name string) (bool, error) {
-
-	req := &lambda.GetFunctionInput{
-		FunctionName: aws.String(name),
-	}
-
-	resp, err := svc.GetFunction(req)
-
-	log.Println("GetFunction : ", resp, err)
-
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case lambda.ErrCodeResourceNotFoundException:
-				return false, nil
-			}
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-func updateAlias(svc *lambda.Lambda, functionName, aliasName, functionVersion string) error {
-
-	req := &lambda.UpdateAliasInput{
-		FunctionName:    aws.String(functionName),
-		Name:            aws.String(aliasName),
-		FunctionVersion: aws.String(functionVersion),
-	}
-
-	resp, err := svc.UpdateAlias(req)
-
-	log.Println("UpdateAlias : ", resp, err)
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
-
-}
-
-func createAlias(svc *lambda.Lambda, functionName, aliasName, functionVersion string) error {
-
-	req := &lambda.CreateAliasInput{
-		FunctionName:    aws.String(functionName),
-		Name:            aws.String(aliasName),
-		FunctionVersion: aws.String(functionVersion),
-	}
-
-	resp, err := svc.CreateAlias(req)
-
-	log.Println("CreateAlias : ", resp, err)
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
-
-}
-
-func aliasExists(svc *lambda.Lambda, functionName, aliasName string) (bool, error) {
-
-	req := &lambda.GetAliasInput{
-		FunctionName: aws.String(functionName),
-		Name:         aws.String(aliasName),
-	}
-
-	resp, err := svc.GetAlias(req)
-
-	log.Println("GetAlias : ", resp, err)
-
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case lambda.ErrCodeResourceNotFoundException:
-				return false, nil
-			}
-			return false, err
-		}
-	}
-
-	return true, nil
-}
-
-func updateLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key string, metadata FunctionMetadata) (*lambda.FunctionConfiguration, error) {
-
-	req := &lambda.UpdateFunctionCodeInput{
-		FunctionName: aws.String(metadata.FunctionName),
-		Publish:      aws.Bool(true),
-		S3Bucket:     aws.String(s3Bucket),
-		S3Key:        aws.String(s3Key),
-	}
-
-	resp, err := svc.UpdateFunctionCode(req)
-
-	log.Println("UpdateFunctionCode : ", resp, err)
-
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return resp, nil
-}
-
-func deployLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key, role string, metadata FunctionMetadata) (*lambda.FunctionConfiguration, error) {
-
-	req := &lambda.CreateFunctionInput{
-		Code: &lambda.FunctionCode{
-			S3Bucket: aws.String(s3Bucket),
-			S3Key:    aws.String(s3Key),
-		},
-		Description:  aws.String(metadata.Description),
-		FunctionName: aws.String(metadata.FunctionName),
-		Handler:      aws.String(metadata.Handler),
-		MemorySize:   aws.Int64(metadata.MemorySize),
-		Publish:      aws.Bool(true),
-		Role:         aws.String(role),
-		Runtime:      aws.String(metadata.Runtime),
-		Timeout:      aws.Int64(metadata.Timeout),
-	}
-
-	resp, err := svc.CreateFunction(req)
-
-	log.Println("CreateFunction : ", resp, err)
-
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return resp, nil
-}
-
-func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (FunctionMetadata, error) {
+func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (deployer.FunctionMetadata, error) {
 
 	req := &s3.HeadObjectInput{
 		Bucket: aws.String(s3Bucket),
@@ -304,24 +127,22 @@ func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (FunctionMetadata, error) {
 	resp, err := svc.HeadObject(req)
 
 	if err != nil {
-		return FunctionMetadata{}, err
+		return deployer.FunctionMetadata{}, err
 	}
-
-	log.Printf("metadata : %v \n", resp.Metadata)
 
 	memorySize, err := strconv.ParseInt(*(resp.Metadata["Function-Memory-Size"]), 10, 64)
 
 	if err != nil {
-		return FunctionMetadata{}, errors.Wrap(err, "cannot parse function-memory-size")
+		return deployer.FunctionMetadata{}, errors.Wrap(err, "cannot parse function-memory-size")
 	}
 
 	timeout, err := strconv.ParseInt(*(resp.Metadata["Function-Timeout"]), 10, 64)
 
 	if err != nil {
-		return FunctionMetadata{}, errors.Wrap(err, "cannot parse function-timeout")
+		return deployer.FunctionMetadata{}, errors.Wrap(err, "cannot parse function-timeout")
 	}
 
-	meta := FunctionMetadata{
+	meta := deployer.FunctionMetadata{
 		Description:  *(resp.Metadata["Function-Description"]),
 		FunctionName: *(resp.Metadata["Function-Name"]),
 		Handler:      *(resp.Metadata["Function-Handler"]),
@@ -329,6 +150,16 @@ func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (FunctionMetadata, error) {
 		MemorySize:   int64(memorySize),
 		Timeout:      int64(timeout),
 		Alias:        *(resp.Metadata["Function-Alias"]),
+		EnvVars:      map[string]interface{}{},
+	}
+
+	// add in any environmental variables set in the terraform
+	envVars := os.Getenv("DEPLOYER_FUNCTION_ENV_VARS")
+
+	err = json.Unmarshal([]byte(envVars), &meta.EnvVars)
+
+	if err != nil {
+		return deployer.FunctionMetadata{}, errors.Wrap(err, "error un-marshaling envionmental vars")
 	}
 
 	return meta, nil

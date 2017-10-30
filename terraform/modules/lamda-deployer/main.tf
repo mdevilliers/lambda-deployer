@@ -68,6 +68,7 @@ resource "aws_lambda_function" "deployer" {
   environment {
     variables = {
       DEPLOYER_FUNCTION_ROLE_ARN = "${var.function_role_arn}"
+      DEPLOYER_FUNCTION_ENV_VARS = "${jsonencode(var.env_vars["variables"])}"
     }
   }
 }
