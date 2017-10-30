@@ -21,3 +21,9 @@ variable "deployer_filepath" {
 variable "function_role_arn" {
   description = "The arn of the role the function will be deployed with"
 }
+
+variable "env_vars" {
+  type = "map"
+  description = "A map of variables to be passed to the lambda function on deployment"
+  default = {}
+}
