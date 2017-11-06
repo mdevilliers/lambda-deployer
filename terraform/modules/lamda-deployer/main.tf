@@ -74,7 +74,7 @@ resource "aws_lambda_function" "deployer" {
 }
 
 resource "aws_lambda_permission" "allow_s3" {
-  statement_id  = "AllowExecutionFromS3Bucket"
+  statement_id  = "AllowExecutionFromS3Bucket_LD_{var.application}"
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.deployer.function_name}"
   principal     = "s3.amazonaws.com"
