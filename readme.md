@@ -47,6 +47,9 @@ module "auto_deployer" {
 
 ```
 
+![function]( docs/function.jpg)
+
+
 There is an example terraform package using the terraform [module](https://github.com/mdevilliers/lambda-deployer/tree/master/terraform)
 
 - download and configure the uploader with the credentials of the upload user, the name of the S3 bucket and properties for your lambda function.
@@ -69,6 +72,4 @@ On upload to S3 the function.zip file contains metadata for the deployer to use
 ![metadata]( docs/metadata.jpg)
 
 - the deployer will deploy the function
-
-![function]( docs/function.jpg)
 
