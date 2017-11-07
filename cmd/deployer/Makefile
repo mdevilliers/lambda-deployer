@@ -1,6 +1,6 @@
 SOURCE_VERSION = $(shell git rev-parse --short=6 HEAD)
 HANDLER ?= handler
-PACKAGE ?= deployer
+PACKAGE ?= lambda-deployer
 
 GOPATH ?= $(HOME)/go
 RM := rm -f
