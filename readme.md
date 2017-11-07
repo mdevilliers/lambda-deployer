@@ -49,8 +49,6 @@ module "auto_deployer" {
 
 There is an example terraform package using the terraform [module](https://github.com/mdevilliers/lambda-deployer/tree/master/terraform)
 
-TODO : INSERT IMAGE
-
 - download and configure the uploader with the credentials of the upload user, the name of the S3 bucket and properties for your lambda function.
 
 ```
