@@ -63,27 +63,27 @@ lambda-build-ci: ## build the lambda zip files (using the ci build)
 
 .PHONY: lambda-build
 
-darwin-amd64: tmp/build/darwin-amd64/uploader ## build for mac amd64
+darwin-amd64: tmp/build/darwin-amd64/lambda-uploader ## build for mac amd64
 
-linux-amd64: tmp/build/linux-amd64/uploader ## build for linux amd64
+linux-amd64: tmp/build/linux-amd64/lambda-uploader ## build for linux amd64
 
-linux-arm: tmp/build/linux-arm/uploader ## build for linux arm (raspberry-pi)
+linux-arm: tmp/build/linux-arm/lambda-uploader ## build for linux arm (raspberry-pi)
 
 .PHONY: darwin-amd64 linux-amd64 linux-arm
 
 
 ## linux-amd64
-tmp/build/linux-amd64/uploader:
+tmp/build/linux-amd64/lambda-uploader:
 	GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(@) ./cmd/uploader/
 
 
 ## linux-arm
-tmp/build/linux-arm/uploader:
+tmp/build/linux-arm/lambda-uploader:
 	GOOS=linux GOARCH=arm go build $(BUILD_FLAGS) -o $(@) ./cmd/uploader/
 
 
 ## darwin-amd64
-tmp/build/darwin-amd64/uploader:
+tmp/build/darwin-amd64/lambda-uploader:
 	GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) -o $(@) ./cmd/uploader/
 
 

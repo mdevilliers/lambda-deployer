@@ -32,7 +32,7 @@ module "auto_deployer" {
 
   application       = "${var.application}" // name of your application
   environment       = "${var.environment}" // logical environment e.g. production
-  deployer_filepath = "../../etc/deployer.zip" // path to the deployer zip file
+  deployer_filepath = "./some/path/lambda-deployer.zip" // path to the deployer zip file
 
   function_role_arn = "${aws_iam_role.lambda_exec_role.arn}" // arn of the AWS IAM role your function needs
   s3_bucket_arn     = "${aws_s3_bucket.deployment_uploads.arn}" // arn of the AWS S3 bucket to monitor for uploads
@@ -55,7 +55,7 @@ There is an example terraform package using the terraform [module](https://githu
 export AWS_ACCESS_KEY_ID=**************
 export AWS_SECRET_ACCESS_KEY=***********************
 
-uploader up -b myS3Bucket \
+lambda-uploader up -b myS3Bucket \
             -a myAlias \
             -d "AUTOMATED DEPLOY" \
             -e handler.Handle \

@@ -25,7 +25,7 @@ jobs:
       - checkout
       - run : make lambda-build-ci
       - store_artifacts:
-          path: ./cmd/deployer/deployer.zip
+          path: ./cmd/deployer/lambda-deployer.zip
 workflows:
   version: 2
   all:
