@@ -35,7 +35,7 @@ jobs:
           root: ./cmd/deployer
           paths:
             - ./lambda-deployer.zip
-    release:
+  release-to-github:
       docker:
         - image: circleci/golang:1.9.1
       steps:
@@ -51,7 +51,7 @@ workflows:
       - lambda-build:
           requires:
             - build
-      - release:
+      - release-to-github:
           requires:
             - build
             - lambda-build
