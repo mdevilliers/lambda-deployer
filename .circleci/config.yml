@@ -44,7 +44,7 @@ jobs:
           at: /tmp/workspace
        - run: shasum -a 256 /tmp/workspace/* > /tmp/workspace/SHASUMS
        - run: go get github.com/tcnksm/ghr
-       - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME `/tmp/workspace/lambda-uploder-linux-amd64 version` /tmp/workspace/
+       - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME `/tmp/workspace/lambda-uploader-linux-amd64 version` /tmp/workspace/
 workflows:
   version: 2
   all:
