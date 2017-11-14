@@ -42,7 +42,9 @@ jobs:
        - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: /tmp/workspace
-       - run: ls /tmp/workspace 
+       - run: shasum -a 256 /tmp/workspace/* > /tmp/workspace/SHASUMS
+       - run: go get github.com/tcnksm/ghr
+       - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG /tmp/workspace/
 workflows:
   version: 2
   all:
@@ -55,3 +57,8 @@ workflows:
           requires:
             - build
             - lambda-build
+          filters:
+            tags:
+              only: /^release-.*/
+            branches:
+              ignore: /.*/
