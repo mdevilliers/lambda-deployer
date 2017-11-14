@@ -12,8 +12,12 @@ jobs:
       - run: make check-vendor-licenses
       - run: make coverage
       - run: make all
-      - store_artifacts:
-          path: ./tmp/build/
+      - persist_to_workspace:
+          root: ./tmp/build
+          paths:
+            - ./lambda-uploader-darwin-amd64
+            - ./lambda-uploader-linux-amd64
+            - ./lambda-uploader-linux-arm
   lambda-build:
     docker:
       - image: eawsy/aws-lambda-go-shim:latest
@@ -23,9 +27,24 @@ jobs:
     working_directory: /go/src/github.com/mdevilliers/lambda-deployer
     steps:
       - checkout
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: /tmp/workspace
       - run : make lambda-build-ci
-      - store_artifacts:
-          path: ./cmd/deployer/lambda-deployer.zip
+      - persist_to_workspace:
+          root: ./cmd/deployer
+          paths:
+            - ./lambda-deployer.zip
+  release-to-github:
+      docker:
+        - image: circleci/golang:1.9.1
+      steps:
+       - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: /tmp/workspace
+       - run: shasum -a 256 /tmp/workspace/* > /tmp/workspace/SHASUMS
+       - run: go get github.com/tcnksm/ghr
+       - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG /tmp/workspace/
 workflows:
   version: 2
   all:
@@ -34,3 +53,12 @@ workflows:
       - lambda-build:
           requires:
             - build
+      - release-to-github:
+          requires:
+            - build
+            - lambda-build
+          filters:
+            tags:
+              only: /^release-.*/
+            branches:
+              ignore: /.*/
