@@ -6,7 +6,7 @@ lambda-deployer
 Aim
 ---
 
-Deploy and update lambda functions easily and securely from either a developers machine or CI system.
+Automate the deployment of lambda functions easily from either a developers machine or CI system.
 
 Goals
 -----
@@ -47,7 +47,7 @@ module "auto_deployer" {
 
 ```
 
-![function]( docs/function.jpg)
+![function](docs/function.jpg)
 
 
 There is an example terraform package using the terraform [module](https://github.com/mdevilliers/lambda-deployer/tree/master/terraform)
@@ -58,18 +58,18 @@ There is an example terraform package using the terraform [module](https://githu
 export AWS_ACCESS_KEY_ID=**************
 export AWS_SECRET_ACCESS_KEY=***********************
 
-lambda-uploader up -b myS3Bucket \
-            -a myAlias \
-            -d "AUTOMATED DEPLOY" \
-            -e handler.Handle \
-            -r python2.7 \
-            -n myFunction /path/to/function.zip
+lambda-uploader-linux-amd64 up -b myS3Bucket \
+                               -a myAlias \
+                               -d "AUTOMATED DEPLOY" \
+                               -e handler.Handle \
+                               -r python2.7 \
+                               -n myFunction /path/to/function.zip
 
 ```
 
 On upload to S3 the function.zip file contains metadata for the deployer to use
 
-![metadata]( docs/metadata.jpg)
+![metadata](docs/metadata.jpg)
 
 - the deployer will deploy the function
 
