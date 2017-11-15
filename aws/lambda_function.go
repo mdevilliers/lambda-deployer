@@ -2,7 +2,6 @@ package aws
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -35,9 +34,7 @@ func functionExists(svc *lambda.Lambda, name string) (bool, error) {
 		FunctionName: aws.String(name),
 	}
 
-	resp, err := svc.GetFunction(req)
-
-	log.Println("GetFunction : ", resp, err)
+	_, err := svc.GetFunction(req)
 
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -61,8 +58,6 @@ func updateLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key string, metadata d
 	}
 
 	resp, err := svc.UpdateFunctionCode(req)
-
-	log.Println("UpdateFunctionCode : ", resp, err)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -96,8 +91,6 @@ func newLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key, role string, metadat
 	}
 
 	resp, err := svc.CreateFunction(req)
-
-	log.Println("CreateFunction : ", resp, err)
 
 	if err != nil {
 		return nil, errors.WithStack(err)
