@@ -21,10 +21,15 @@ func main() {
 	// DO NOTHING
 }
 
+// Policy holds information for the deployer to implement
 type Policy struct {
-	MaximumVersions int
+	// MaximumUntaggedVersions is the maximum untagged versions of a lambda function
+	// we want to keep. Tagged versions are never deleted.
+	MaximumUntaggedVersions int
 }
 
+// S3Event struct captures the JSON structure of the event passed when a new
+// object is created in S3
 type S3Event struct {
 	Records []struct {
 		EventVersion      string    `json:"eventVersion"`
@@ -62,6 +67,9 @@ type S3Event struct {
 	} `json:"Records"`
 }
 
+// Handle is called when ever an object is written to S3 via the uploader.
+// We assume this is always a lambda function zip file and that AWS Lambda will error
+// if the file is not of a correct format.
 func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 
 	log.Println("deployer : ", deployer.VersionString())
@@ -87,12 +95,12 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", err
 	}
 
-	svc := lambda.New(session, aws.NewConfig())
+	lambdaSvc := lambda.New(session, aws.NewConfig())
+	s3Svc := s3.New(session, aws.NewConfig())
 
 	bucket := s3Event.Records[0].S3.Bucket.Name
 	key := s3Event.Records[0].S3.Object.Key
 
-	s3Svc := s3.New(session, aws.NewConfig())
 	meta, err := getMetadata(s3Svc, bucket, key)
 
 	if err != nil {
@@ -100,14 +108,14 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	}
 
 	// create or update the lambda function
-	conf, err := aws_helper.CreateOrUpdateFunction(svc, bucket, key, role, meta)
+	conf, err := aws_helper.CreateOrUpdateFunction(lambdaSvc, bucket, key, role, meta)
 
 	if err != nil {
 		return "error", errors.Wrap(err, "error creating or updating lambda function")
 	}
 
 	// update, create the alias
-	err = aws_helper.CreateOrUpdateAlias(svc, conf, meta)
+	err = aws_helper.CreateOrUpdateAlias(lambdaSvc, conf, meta)
 
 	if err != nil {
 		return "error", errors.Wrap(err, "error creating or updating alias")
@@ -117,6 +125,7 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 
 }
 
+// getMetadata parses the S3 object metadata
 func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (deployer.FunctionMetadata, error) {
 
 	req := &s3.HeadObjectInput{
