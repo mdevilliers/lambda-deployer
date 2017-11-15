@@ -59,4 +59,4 @@ workflows:
             - lambda-build
           filters:
             branches:
-              only: /master/
+              only: /release/
