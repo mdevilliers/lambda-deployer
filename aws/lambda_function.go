@@ -98,3 +98,7 @@ func newLambdaFunction(svc *lambda.Lambda, s3Bucket, s3Key, role string, metadat
 
 	return resp, nil
 }
+
+func ReduceUnAliasedVersions(svc *lambda.Lambda, maxVersions int, metadata deployer.FunctionMetadata) error {
+	return nil
+}

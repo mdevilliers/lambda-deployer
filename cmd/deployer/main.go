@@ -26,6 +26,9 @@ type Policy struct {
 	// MaximumUnAliasedVersions is the maximum unaliased versions of a lambda function
 	// we want to keep. Versions with an alias are never deleted.
 	MaximumUnAliasedVersions int
+
+	// ReduceUnAliasedVersions is true if MaxUnAliasedVersions has been specified
+	ReduceUnAliasedVersions bool
 }
 
 // S3Event struct captures the JSON structure of the event passed when a new
@@ -81,9 +84,15 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", errors.New("DEPLOYER_FUNCTION_ROLE_ARN not set")
 	}
 
+	policy, err := loadPolicy()
+
+	if err != nil {
+		return "error", errors.Wrap(err, "error loading policy")
+	}
+
 	s3Event := S3Event{}
 
-	err := json.Unmarshal(evt, &s3Event)
+	err = json.Unmarshal(evt, &s3Event)
 
 	if err != nil {
 		return "error", errors.Wrap(err, "error un-marshaling event json")
@@ -119,6 +128,17 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 
 	if err != nil {
 		return "error", errors.Wrap(err, "error creating or updating alias")
+	}
+
+	// delete unused versions if required
+	if policy.ReduceUnAliasedVersions {
+
+		err = aws_helper.ReduceUnAliasedVersions(lambdaSvc, policy.MaximumUnAliasedVersions, meta)
+
+		if err != nil {
+			return "error", errors.Wrap(err, "error deleting UnAliased versions")
+		}
+
 	}
 
 	return "ok", nil
@@ -177,12 +197,27 @@ func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (deployer.FunctionMetadata,
 
 func loadPolicy() (Policy, error) {
 
-	maxUnAliasedVersionsStr := os.Getenv("DEPLOYER_MAX_UNALIASED_VERSIONS")
-	maxUnAliasedVersions, err := strconv.ParseInt(maxUnAliasedVersionsStr, 10, 64)
+	maxUnAliasedVersionsStr := os.Getenv("DEPLOYER_POLICY_MAX_UNALIASED_VERSIONS")
 
-	if err != nil {
-		return Policy{}, err
+	maxUnAliasedVersions := int64(0)
+	var reduceUnAliasedVersions bool
+	var err error
+
+	if maxUnAliasedVersionsStr != "" {
+
+		maxUnAliasedVersions, err = strconv.ParseInt(maxUnAliasedVersionsStr, 10, 64)
+
+		if err != nil {
+			return Policy{}, err
+		} else {
+			maxUnAliasedVersions = 0
+		}
+
+		reduceUnAliasedVersions = true
 	}
-	return Policy{MaximumUnAliasedVersions: int(maxUnAliasedVersions)}, nil
+	return Policy{
+		MaximumUnAliasedVersions: int(maxUnAliasedVersions),
+		ReduceUnAliasedVersions:  reduceUnAliasedVersions,
+	}, nil
 
 }
