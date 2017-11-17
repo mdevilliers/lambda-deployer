@@ -23,9 +23,9 @@ func main() {
 
 // Policy holds information for the deployer to implement
 type Policy struct {
-	// MaximumUntaggedVersions is the maximum untagged versions of a lambda function
-	// we want to keep. Tagged versions are never deleted.
-	MaximumUntaggedVersions int
+	// MaximumUnAliasedVersions is the maximum unaliased versions of a lambda function
+	// we want to keep. Versions with an alias are never deleted.
+	MaximumUnAliasedVersions int
 }
 
 // S3Event struct captures the JSON structure of the event passed when a new
@@ -139,26 +139,26 @@ func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (deployer.FunctionMetadata,
 		return deployer.FunctionMetadata{}, err
 	}
 
-	memorySize, err := strconv.ParseInt(*(resp.Metadata["Function-Memory-Size"]), 10, 64)
+	memorySize, err := strconv.ParseInt(*(resp.Metadata[deployer.FunctionMemorySizeTag]), 10, 64)
 
 	if err != nil {
 		return deployer.FunctionMetadata{}, errors.Wrap(err, "cannot parse function-memory-size")
 	}
 
-	timeout, err := strconv.ParseInt(*(resp.Metadata["Function-Timeout"]), 10, 64)
+	timeout, err := strconv.ParseInt(*(resp.Metadata[deployer.FunctionTimeoutTag]), 10, 64)
 
 	if err != nil {
 		return deployer.FunctionMetadata{}, errors.Wrap(err, "cannot parse function-timeout")
 	}
 
 	meta := deployer.FunctionMetadata{
-		Description:  *(resp.Metadata["Function-Description"]),
-		FunctionName: *(resp.Metadata["Function-Name"]),
-		Handler:      *(resp.Metadata["Function-Handler"]),
-		Runtime:      *(resp.Metadata["Function-Runtime"]),
+		Description:  *(resp.Metadata[deployer.FunctionDescriptionTag]),
+		FunctionName: *(resp.Metadata[deployer.FunctionNameTag]),
+		Handler:      *(resp.Metadata[deployer.FunctionHandlerTag]),
+		Runtime:      *(resp.Metadata[deployer.FunctionRuntimeTag]),
 		MemorySize:   int64(memorySize),
 		Timeout:      int64(timeout),
-		Alias:        *(resp.Metadata["Function-Alias"]),
+		Alias:        *(resp.Metadata[deployer.FunctionAliasTag]),
 		EnvVars:      map[string]interface{}{},
 	}
 
@@ -168,9 +168,21 @@ func getMetadata(svc *s3.S3, s3Bucket, s3Key string) (deployer.FunctionMetadata,
 	err = json.Unmarshal([]byte(envVars), &meta.EnvVars)
 
 	if err != nil {
-		return deployer.FunctionMetadata{}, errors.Wrap(err, "error un-marshaling envionmental vars")
+		return deployer.FunctionMetadata{}, errors.Wrap(err, "error un-marshaling environmental vars")
 	}
 
 	return meta, nil
+
+}
+
+func loadPolicy() (Policy, error) {
+
+	maxUnAliasedVersionsStr := os.Getenv("DEPLOYER_MAX_UNALIASED_VERSIONS")
+	maxUnAliasedVersions, err := strconv.ParseInt(maxUnAliasedVersionsStr, 10, 64)
+
+	if err != nil {
+		return Policy{}, err
+	}
+	return Policy{MaximumUnAliasedVersions: int(maxUnAliasedVersions)}, nil
 
 }
