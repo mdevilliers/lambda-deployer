@@ -209,10 +209,7 @@ func loadPolicy() (Policy, error) {
 
 		if err != nil {
 			return Policy{}, err
-		} else {
-			maxUnAliasedVersions = 0
 		}
-
 		reduceUnAliasedVersions = true
 	}
 	return Policy{
