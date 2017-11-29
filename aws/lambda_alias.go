@@ -1,8 +1,6 @@
 package aws
 
 import (
-	"log"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -32,9 +30,7 @@ func updateAlias(svc *lambda.Lambda, functionName, aliasName, functionVersion st
 		FunctionVersion: aws.String(functionVersion),
 	}
 
-	resp, err := svc.UpdateAlias(req)
-
-	log.Println("UpdateAlias : ", resp, err)
+	_, err := svc.UpdateAlias(req)
 
 	if err != nil {
 		return errors.WithStack(err)
@@ -52,9 +48,7 @@ func newAlias(svc *lambda.Lambda, functionName, aliasName, functionVersion strin
 		FunctionVersion: aws.String(functionVersion),
 	}
 
-	resp, err := svc.CreateAlias(req)
-
-	log.Println("CreateAlias : ", resp, err)
+	_, err := svc.CreateAlias(req)
 
 	if err != nil {
 		return errors.WithStack(err)
@@ -71,9 +65,7 @@ func aliasExists(svc *lambda.Lambda, functionName, aliasName string) (bool, erro
 		Name:         aws.String(aliasName),
 	}
 
-	resp, err := svc.GetAlias(req)
-
-	log.Println("GetAlias : ", resp, err)
+	_, err := svc.GetAlias(req)
 
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {

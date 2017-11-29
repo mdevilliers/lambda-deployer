@@ -12,3 +12,13 @@ type FunctionMetadata struct {
 	Alias        string
 	EnvVars      map[string]interface{}
 }
+
+const (
+	FunctionDescriptionTag = "Function-Description"
+	FunctionNameTag        = "Function-Name"
+	FunctionHandlerTag     = "Function-Handler"
+	FunctionRuntimeTag     = "Function-Runtime"
+	FunctionMemorySizeTag  = "Function-Memory-Size"
+	FunctionTimeoutTag     = "Function-Timeout"
+	FunctionAliasTag       = "Function-Alias"
+)

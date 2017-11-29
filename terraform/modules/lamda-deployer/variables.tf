@@ -27,3 +27,8 @@ variable "env_vars" {
   description = "A map of variables to be passed to the lambda function on deployment"
   default = {}
 }
+
+variable "maximum_unaliased_versions" {
+    description = "The number of versions without an alias to keep. A function with an alias is a function in use."
+    default = 3
+}

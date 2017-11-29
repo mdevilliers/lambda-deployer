@@ -34,10 +34,13 @@ resource "aws_iam_role_policy" "deployer" {
         "iam:PassRole",
         "lambda:CreateAlias",
         "lambda:CreateFunction",
+        "lambda:DeleteFunction",
         "lambda:GetAlias",
         "lambda:GetFunction",
+        "lambda:ListAliases",
         "lambda:UpdateAlias",
         "lambda:UpdateFunctionCode",
+        "lambda:ListVersionsByFunction",
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
         "logs:PutLogEvents",
@@ -48,6 +51,7 @@ resource "aws_iam_role_policy" "deployer" {
         "arn:aws:logs:*:*:*",
         "${var.s3_bucket_arn}/*",
         "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:*",
+        "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*",
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:*"
       ]
     }
@@ -69,12 +73,13 @@ resource "aws_lambda_function" "deployer" {
     variables = {
       DEPLOYER_FUNCTION_ROLE_ARN = "${var.function_role_arn}"
       DEPLOYER_FUNCTION_ENV_VARS = "${jsonencode(var.env_vars["variables"])}"
+      DEPLOYER_POLICY_MAX_UNALIASED_VERSIONS = "${var.maximum_unaliased_versions}"
     }
   }
 }
 
 resource "aws_lambda_permission" "allow_s3" {
-  statement_id  = "AllowExecutionFromS3Bucket_LD_{var.application}"
+  statement_id  = "AllowExecutionFromS3Bucket_LD_${var.application}"
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.deployer.function_name}"
   principal     = "s3.amazonaws.com"

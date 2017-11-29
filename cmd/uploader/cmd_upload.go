@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	deployer "github.com/mdevilliers/lambda-deployer"
 	"github.com/spf13/cobra"
 )
 
@@ -51,13 +52,13 @@ func newUploadCommand() *cobra.Command {
 				Bucket: aws.String(_config.S3BucketName),
 				Key:    aws.String(fileName),
 				Metadata: map[string]*string{
-					"Function-Description": aws.String(_config.Description),
-					"Function-Name":        aws.String(_config.FunctionName),
-					"Function-Handler":     aws.String(_config.Handler),
-					"Function-Runtime":     aws.String(_config.Runtime),
-					"Function-Memory-Size": aws.String(fmt.Sprintf("%d", _config.MemorySize)),
-					"Function-Timeout":     aws.String(fmt.Sprintf("%d", _config.Timeout)),
-					"Function-Alias":       aws.String(_config.Alias),
+					deployer.FunctionDescriptionTag: aws.String(_config.Description),
+					deployer.FunctionNameTag:        aws.String(_config.FunctionName),
+					deployer.FunctionHandlerTag:     aws.String(_config.Handler),
+					deployer.FunctionRuntimeTag:     aws.String(_config.Runtime),
+					deployer.FunctionMemorySizeTag:  aws.String(fmt.Sprintf("%d", _config.MemorySize)),
+					deployer.FunctionTimeoutTag:     aws.String(fmt.Sprintf("%d", _config.Timeout)),
+					deployer.FunctionAliasTag:       aws.String(_config.Alias),
 				},
 			}
 
