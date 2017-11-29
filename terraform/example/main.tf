@@ -85,7 +85,7 @@ module "auto_deployer" {
 
   application       = "example"
   environment       = "staging"
-  deployer_filepath = "../../cmd/deployer/deployer.zip"
+  deployer_filepath = "../../cmd/deployer/lambda-deployer.zip"
 
   function_role_arn = "${aws_iam_role.my_lambda_role.arn}"
   s3_bucket_arn     = "${aws_s3_bucket.deployment_uploads.arn}"
