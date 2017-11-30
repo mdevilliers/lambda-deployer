@@ -23,12 +23,12 @@ variable "function_role_arn" {
 }
 
 variable "env_vars" {
-  type = "map"
+  type        = "map"
   description = "A map of variables to be passed to the lambda function on deployment"
-  default = {}
+  default     = {}
 }
 
 variable "maximum_unaliased_versions" {
-    description = "The number of versions without an alias to keep. A function with an alias is a function in use."
-    default = 3
+  description = "The number of versions without an alias to keep. A function with an alias is a function in use."
+  default     = 3
 }

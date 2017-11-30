@@ -11,11 +11,12 @@ Automate the deployment of lambda functions easily from either a developers mach
 Goals
 -----
 
-- secure by default
-  - upload and configure lambda functions with a minimum set of AWS permissions.
-  - sensitive configuration information e.g. database connection credentials are not exposed to either a CI system, developer machine or (shock horror) Github!
-- easy to integrate CI or the developer workflow
-- integrate cleanly with existing AWS environments
+- Manage permissions and secrets : 
+  - AWS permissions are managed centrally with a minimum set exposed
+  - Sensitive configuration information e.g. database connection credentials are not exposed to either a CI system, developer machine or (shock horror) Github!
+- Easy to integrate CI or the developer workflow
+- Integrate cleanly with existing AWS environments
+- Ability to automatically delete unused functions
 
 Usage
 -----
@@ -37,6 +38,8 @@ module "auto_deployer" {
   function_role_arn = "${aws_iam_role.lambda_exec_role.arn}" // arn of the AWS IAM role your function needs
   s3_bucket_arn     = "${aws_s3_bucket.deployment_uploads.arn}" // arn of the AWS S3 bucket to monitor for uploads
   s3_bucket_id      = "${aws_s3_bucket.deployment_uploads.id}" // name of the AWS S3 bucket bucket to monitor for uploads
+
+  maximum_unaliased_versions = 10 // number of unused functions to be retained
 
   env_vars = {
     variables = {
@@ -61,7 +64,7 @@ export AWS_SECRET_ACCESS_KEY=***********************
 lambda-uploader-linux-amd64 up -b myS3Bucket \
                                -a myAlias \
                                -d "AUTOMATED DEPLOY" \
-                               -e handler.Handle \
+                               -e myEntry.Point \
                                -r python2.7 \
                                -n myFunction /path/to/function.zip
 
