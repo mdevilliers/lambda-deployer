@@ -138,7 +138,7 @@ func ReduceUnAliasedVersions(svc *lambda.Lambda, maxVersions int, metadata deplo
 
 		drop := false
 
-		// $LATEST is a special poiter to the latest function
+		// $LATEST is a special pointer to the latest function
 		// helpfully it isn't returned in the list of aliases
 		// so we need a special case here
 		if *(version.Version) == "$LATEST" {
