@@ -6,16 +6,17 @@ lambda-deployer
 Aim
 ---
 
-Automate the deployment of lambda functions easily from either a developers machine or CI system.
+Automate the deployment of lambda functions from either a developers machine or CI system.
 
 Goals
 -----
 
-- Manage permissions and secrets : 
+- Manage permissions and secrets :
   - AWS permissions are managed centrally with a minimum set exposed
   - Sensitive configuration information e.g. database connection credentials are not exposed to either a CI system, developer machine or (shock horror) Github!
 - Easy to integrate CI or the developer workflow
 - Integrate cleanly with existing AWS environments
+- Ability to upload and deploy functions to multiple AWS regions
 - Ability to automatically delete unused functions
 
 Usage
@@ -55,9 +56,10 @@ module "auto_deployer" {
 
 There is an example terraform package using the terraform [module](https://github.com/mdevilliers/lambda-deployer/tree/master/terraform)
 
-- download and configure the uploader with the credentials of the upload user, the name of the S3 bucket and properties for your lambda function.
+- download and configure the lambda-uploader with the credentials of the upload user, the name of the S3 bucket and properties for your lambda function.
 
 ```
+export AWS_REGION=some-region-1
 export AWS_ACCESS_KEY_ID=**************
 export AWS_SECRET_ACCESS_KEY=***********************
 
@@ -70,9 +72,29 @@ lambda-uploader-linux-amd64 up -b myS3Bucket \
 
 ```
 
-On upload to S3 the function.zip file contains metadata for the deployer to use
+The lambda-uploader supports uploading to additional regions via the -g flag.
+
+```
+
+lambda-uploader-linux-amd64 up -b myS3Bucket \
+                               -a myAlias \
+                               -d "AUTOMATED DEPLOY" \
+                               -e myEntry.Point \
+                               -r python2.7 \
+                               -g region-1 \
+                               -g region-2 \
+                               -n myFunction /path/to/function.zip
+
+```
+
+It is expected that: 
+  - an S3 bucket of the same name will exist in all of the regions
+  - the lambda-deployer will be deployed to each of the regions
+
+
+On upload to the S3 bucket the zip file will have additional metadata for the lambda-deployer to use. This metadata is viewable via the AWS S3 user interface.
 
 ![metadata](docs/metadata.jpg)
 
-- the deployer will deploy the function
+- the lambda-deployer will deploy the function
 
