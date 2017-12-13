@@ -9,5 +9,5 @@ var (
 
 // VersionString returns the version of the software
 func VersionString() string {
-	return fmt.Sprintf("1.1-%s", SourceVersion)
+	return fmt.Sprintf("1.0.1-%s", SourceVersion)
 }
