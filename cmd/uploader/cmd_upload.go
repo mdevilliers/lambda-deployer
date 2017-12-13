@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	deployer "github.com/mdevilliers/lambda-deployer"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -38,8 +38,6 @@ func newUploadCommand() *cobra.Command {
 				return err
 			}
 
-			svc := s3.New(session, aws.NewConfig())
-
 			f, err := os.Open(pathToFile)
 
 			if err != nil {
@@ -62,7 +60,23 @@ func newUploadCommand() *cobra.Command {
 				},
 			}
 
-			_, err = svc.PutObject(req)
+			// get any default region if specified via an environmental variable
+			// and add it to any configured regions specified via the application flags
+			regionFromEnvironment := os.Getenv("AWS_REGION")
+
+			if regionFromEnvironment != "" {
+				if !stringInSlice(regionFromEnvironment, _config.Regions) {
+					_config.Regions = append(_config.Regions, regionFromEnvironment)
+				}
+			}
+
+			// upload to all regions
+			for _, region := range _config.Regions {
+				err = uploadToRegion(session, req, region)
+				if err != nil {
+					return errors.Wrap(err, fmt.Sprintf("error uploading to region : %s", region))
+				}
+			}
 
 			return err
 
@@ -79,6 +93,16 @@ func newUploadCommand() *cobra.Command {
 	return uploadCommand
 }
 
+func uploadToRegion(session *session.Session, req *s3.PutObjectInput, region string) error {
+
+	svc := s3.New(session, aws.NewConfig().WithRegion(region))
+
+	_, err := svc.PutObject(req)
+
+	return err
+
+}
+
 func fileExists(name string) bool {
 	if _, err := os.Stat(name); err != nil {
 		if os.IsNotExist(err) {
@@ -86,4 +110,13 @@ func fileExists(name string) bool {
 		}
 	}
 	return true
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
