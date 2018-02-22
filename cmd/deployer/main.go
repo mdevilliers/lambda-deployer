@@ -7,18 +7,18 @@ import (
 	"strconv"
 	"time"
 
+	lambda_func "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/eawsy/aws-lambda-go-core/service/lambda/runtime"
 	deployer "github.com/mdevilliers/lambda-deployer"
 	aws_helper "github.com/mdevilliers/lambda-deployer/aws"
 	"github.com/pkg/errors"
 )
 
 func main() {
-	// DO NOTHING
+	lambda_func.Start(Handler)
 }
 
 // Policy holds information for the deployer to make true
@@ -70,13 +70,12 @@ type S3Event struct {
 	} `json:"Records"`
 }
 
-// Handle is called when ever an object is written to S3 via the uploader.
+// Handler is called when ever an object is written to S3 via the uploader.
 // We assume this is always a lambda function zip file and that AWS Lambda will error
 // if the file is not of a correct format.
-func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
+func Handler(event S3Event) (string, error) {
 
 	log.Println("deployer : ", deployer.VersionString())
-	log.Println("handle event : ", string(evt))
 
 	role := os.Getenv("DEPLOYER_FUNCTION_ROLE_ARN")
 
@@ -90,14 +89,6 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 		return "error", errors.Wrap(err, "error loading policy")
 	}
 
-	s3Event := S3Event{}
-
-	err = json.Unmarshal(evt, &s3Event)
-
-	if err != nil {
-		return "error", errors.Wrap(err, "error un-marshaling event json")
-	}
-
 	session, err := session.NewSession()
 
 	if err != nil {
@@ -107,8 +98,8 @@ func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
 	lambdaSvc := lambda.New(session, aws.NewConfig())
 	s3Svc := s3.New(session, aws.NewConfig())
 
-	bucket := s3Event.Records[0].S3.Bucket.Name
-	key := s3Event.Records[0].S3.Object.Key
+	bucket := event.Records[0].S3.Bucket.Name
+	key := event.Records[0].S3.Object.Key
 
 	meta, err := getMetadata(s3Svc, bucket, key)
 
