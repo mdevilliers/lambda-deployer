@@ -21,7 +21,7 @@ func main() {
 	// DO NOTHING
 }
 
-// Policy holds information for the deployer to implement
+// Policy holds information for the deployer to make true
 type Policy struct {
 	// MaximumUnAliasedVersions is the maximum unaliased versions of a lambda function
 	// we want to keep. Versions with an alias are never deleted.

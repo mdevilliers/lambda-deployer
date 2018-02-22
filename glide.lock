@@ -1,8 +1,8 @@
-hash: 5ba05fded11994598ac7d49e29b5428c8dce4bd9377173e06adfeb22e7cb25d9
-updated: 2017-10-26T16:50:30.399831081+01:00
+hash: ae4a979d056e3dae5575b885651ce766410fff6b464398945752526686cf50b2
+updated: 2018-02-22T14:20:45.042079396Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: f426770fd5a4bae6186b280d4af7dca83a4cdef4
+  version: adeb60566bc8c9202b0f1be7e3a675beedbc11f0
   subpackages:
   - aws
   - aws/awserr
@@ -20,6 +20,7 @@ imports:
   - aws/request
   - aws/session
   - aws/signer/v4
+  - internal/sdkrand
   - internal/shareddefaults
   - private/protocol
   - private/protocol/json/jsonutil
@@ -38,11 +39,11 @@ imports:
   subpackages:
   - service/lambda/runtime
 - name: github.com/go-ini/ini
-  version: f384f410798cbe7cdce40eec40b79ed32bb4f1ad
+  version: 32e4be5f41bb918afb6e37c07426e2ddbcb6647e
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
-  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+  version: c2b33e8439af944379acbdd9c3a5fe0bc44bd8a5
 - name: github.com/kelseyhightower/envconfig
   version: f611eb38b3875cc3bd991ca91c51d06446afa14c
 - name: github.com/pkg/errors

@@ -1,8 +1,5 @@
 package: github.com/mdevilliers/lambda-deployer
 import:
-- package: github.com/eawsy/aws-lambda-go-core
-  subpackages:
-  - service/lambda/runtime
 - package: github.com/aws/aws-sdk-go
   version: ^1.12.10
   subpackages:
@@ -13,3 +10,5 @@ import:
   version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
 - package: github.com/spf13/pflag
   version: 97afa5e7ca8a08a383cb259e06636b5e2cc7897f
+- package: github.com/kelseyhightower/envconfig
+  version: ^1.3.0
