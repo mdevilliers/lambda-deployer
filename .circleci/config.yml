@@ -2,9 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      # specify the version
       - image: circleci/golang:1.9.1
-
     working_directory: /go/src/github.com/mdevilliers/lambda-deployer
     steps:
       - checkout
@@ -20,17 +18,14 @@ jobs:
             - ./lambda-uploader-linux-arm
   lambda-build:
     docker:
-      - image: eawsy/aws-lambda-go-shim:latest
-        # the docker image for the shim has its own ideas the GOPATH should be
-        environment:
-          GOPATH: /go/
+      - image: circleci/golang:1.9.1
     working_directory: /go/src/github.com/mdevilliers/lambda-deployer
     steps:
       - checkout
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: /tmp/workspace
-      - run : make lambda-build-ci
+      - run : make lambda-build
       - persist_to_workspace:
           root: ./cmd/deployer
           paths:
