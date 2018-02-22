@@ -62,8 +62,8 @@ EOF
 
 resource "aws_lambda_function" "deployer" {
   function_name    = "${var.application}_${var.environment}_deployer"
-  handler          = "handler.Handle"
-  runtime          = "python2.7"
+  handler          = "lambda-deployer-linux-amd64"
+  runtime          = "go1.x"
   filename         = "${var.deployer_filepath}"
   source_code_hash = "${base64sha256(file(var.deployer_filepath))}"
   role             = "${aws_iam_role.deployer.arn}"
