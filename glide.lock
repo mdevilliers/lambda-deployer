@@ -1,6 +1,10 @@
-hash: ae4a979d056e3dae5575b885651ce766410fff6b464398945752526686cf50b2
-updated: 2018-02-22T14:20:45.042079396Z
+hash: 8fab4c43ab15df8756376c070ceb13a21aae5e09245b5e9febc3b4890dc7d3ad
+updated: 2018-02-22T14:24:13.120208172Z
 imports:
+- name: github.com/aws/aws-lambda-go
+  version: fafa7e49388b8991caf99308e80655ba91816b72
+  subpackages:
+  - lambda
 - name: github.com/aws/aws-sdk-go
   version: adeb60566bc8c9202b0f1be7e3a675beedbc11f0
   subpackages:
