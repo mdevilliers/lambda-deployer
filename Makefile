@@ -53,39 +53,39 @@ coverage: test_integration ## generate and display coverage report
 
 .PHONY: test_integration
 
-lambda-build: ## build the lambda zip files
-	cd ./cmd/deployer/ && $(MAKE)
+lambda-build: linux-amd64 ## build the lambda zip files
+	zip -j ./tmp/build/lambda-deployer.zip ./tmp/build/lambda-deployer-linux-amd64
 
 .PHONY: lambda-build
 
-lambda-build-ci: ## build the lambda zip files (using the ci build)
-	cd ./cmd/deployer/ && $(MAKE) ci
+darwin-amd64: tmp/build/lambda-uploader-darwin-amd64 tmp/build/lambda-deployer-darwin-amd64 ## build for mac amd64
 
-.PHONY: lambda-build
+linux-amd64: tmp/build/lambda-uploader-linux-amd64 tmp/build/lambda-deployer-linux-amd64  ## build for linux amd64
 
-darwin-amd64: tmp/build/lambda-uploader-darwin-amd64 ## build for mac amd64
-
-linux-amd64: tmp/build/lambda-uploader-linux-amd64 ## build for linux amd64
-
-linux-arm: tmp/build/lambda-uploader-linux-arm ## build for linux arm (raspberry-pi)
+linux-arm: tmp/build/lambda-uploader-linux-arm tmp/build/lambda-deployer-linux-arm ## build for linux arm (raspberry-pi)
 
 .PHONY: darwin-amd64 linux-amd64 linux-arm
-
 
 ## linux-amd64
 tmp/build/lambda-uploader-linux-amd64:
 	GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(@) ./cmd/uploader/
 
+tmp/build/lambda-deployer-linux-amd64:
+	GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(@) ./cmd/deployer/
 
 ## linux-arm
 tmp/build/lambda-uploader-linux-arm:
 	GOOS=linux GOARCH=arm go build $(BUILD_FLAGS) -o $(@) ./cmd/uploader/
 
+tmp/build/lambda-deployer-linux-arm:
+	GOOS=linux GOARCH=arm go build $(BUILD_FLAGS) -o $(@) ./cmd/deployer/
 
 ## darwin-amd64
 tmp/build/lambda-uploader-darwin-amd64:
 	GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) -o $(@) ./cmd/uploader/
 
+tmp/build/lambda-deployer-darwin-amd64:
+	GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) -o $(@) ./cmd/deployer/
 
 # 'help' parses the Makefile and displays the help text
 help:
