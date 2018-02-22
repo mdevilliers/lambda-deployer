@@ -23,11 +23,10 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          # Must be absolute path or relative path from working_directory
           at: /tmp/workspace
       - run : make lambda-build
       - persist_to_workspace:
-          root: ./cmd/deployer
+          root: ./tmp/build
           paths:
             - ./lambda-deployer.zip
   release-to-github:
@@ -35,7 +34,6 @@ jobs:
         - image: circleci/golang:1.9.1
       steps:
        - attach_workspace:
-          # Must be absolute path or relative path from working_directory
           at: /tmp/workspace
        - run: shasum -a 256 /tmp/workspace/* > /tmp/workspace/SHASUMS
        - run: go get github.com/tcnksm/ghr
